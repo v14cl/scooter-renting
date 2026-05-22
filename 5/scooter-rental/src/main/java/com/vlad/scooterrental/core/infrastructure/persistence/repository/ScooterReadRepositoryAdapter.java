@@ -1,0 +1,51 @@
+package com.vlad.scooterrental.core.infrastructure.persistence.repository;
+
+import com.vlad.scooterrental.core.application.scooter.query.ScooterReadRepository;
+import com.vlad.scooterrental.core.application.scooter.query.ScooterView;
+import com.vlad.scooterrental.core.infrastructure.persistence.jpa.ScooterJpaRepository;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public class ScooterReadRepositoryAdapter implements ScooterReadRepository {
+
+  private final ScooterJpaRepository scooterJpaRepository;
+
+  public ScooterReadRepositoryAdapter(ScooterJpaRepository scooterJpaRepository) {
+    this.scooterJpaRepository = scooterJpaRepository;
+  }
+
+  @Override
+  public List<ScooterView> findAllViews(String status) {
+    return scooterJpaRepository.findAll(Sort.by("code").ascending()).stream()
+        .filter(entity -> status == null || status.isBlank() || entity.getStatus().equalsIgnoreCase(status))
+        .map(
+            entity ->
+                new ScooterView(
+                    entity.getId(),
+                    entity.getCode(),
+                    entity.getModel(),
+                    entity.getStatus(),
+                    entity.getBatteryLevel(),
+                    entity.getPricePerMinute()))
+        .toList();
+  }
+
+  @Override
+  public Optional<ScooterView> findViewById(UUID scooterId) {
+    return scooterJpaRepository
+        .findById(scooterId)
+        .map(
+            entity ->
+                new ScooterView(
+                    entity.getId(),
+                    entity.getCode(),
+                    entity.getModel(),
+                    entity.getStatus(),
+                    entity.getBatteryLevel(),
+                    entity.getPricePerMinute()));
+  }
+}
